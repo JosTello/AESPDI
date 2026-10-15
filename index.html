@@ -3,29 +3,41 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Explorador de Proyectos - Diseño Industrial</title>
+  <title>Dendrograma de Selección de Proyecto - Diseño Industrial</title>
+  <!-- Fuentes: Press Start 2P (Pixel) y Chakra Petch (Techno) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,400;0,600;0,700;1,400&family=Press+Start+2P&display=swap" rel="stylesheet">
+  
   <style>
     :root {
-      --bg: #f8fafc;
-      --card-bg: #ffffff;
-      --primary: #2563eb;
-      --primary-hover: #1d4ed8;
-      --text: #1e293b;
-      --text-muted: #64748b;
-      --border: #e2e8f0;
-      --accent: #10b981;
+      --bg-main: #cbd5e1; /* Gris claro industrial */
+      --card-bg: #f8fafc;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --accent-blue: #2563eb;
+      --accent-neon: #0284c7;
+      --border-color: #94a3b8;
+      --selected-bg: #1e293b;
+      --selected-text: #38bdf8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
     body {
-      font-family: system-ui, -apple-system, sans-serif;
-      background-color: var(--bg);
-      color: var(--text);
-      margin: 0;
-      padding: 2rem;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: 'Chakra Petch', sans-serif;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      min-height: 100vh;
+      padding: 1.5rem;
+      overflow-x: auto;
     }
 
     header {
@@ -33,318 +45,465 @@
       margin-bottom: 2rem;
     }
 
-    header h1 {
-      font-size: 1.8rem;
-      color: var(--text);
-      margin-bottom: 0.5rem;
+    h1 {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 1.2rem;
+      color: #1e293b;
+      margin-bottom: 0.8rem;
+      text-transform: uppercase;
+      line-height: 1.6;
+      text-shadow: 2px 2px 0px #94a3b8;
     }
 
-    header p {
+    p.subtitle {
+      font-size: 1rem;
       color: var(--text-muted);
-      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
     }
 
-    .tree-container {
+    /* Canvas del Dendrograma Circular */
+    .dendrogram-viewport {
+      position: relative;
       width: 100%;
-      max-width: 900px;
+      max-width: 1400px;
+      min-height: 900px;
+      background: var(--card-bg);
+      border: 3px solid #64748b;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    svg#lines-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .nodes-container {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+    }
+
+    /* Estilos de los Nodos */
+    .node-item {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      background: #ffffff;
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.5rem 0.8rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      white-space: nowrap;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      user-select: none;
+    }
+
+    .node-item:hover {
+      border-color: var(--accent-blue);
+      background: #eff6ff;
+      transform: translate(-50%, -50%) scale(1.08);
+      z-index: 10;
+    }
+
+    .node-center {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.7rem;
+      background: #1e293b;
+      color: #38bdf8;
+      border: 3px solid var(--accent-blue);
+      padding: 1rem 1.2rem;
+      border-radius: 50%;
+      text-align: center;
+      width: 140px;
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 15px rgba(37, 99, 235, 0.4);
+    }
+
+    .node-item.selected {
+      background: var(--selected-bg);
+      color: var(--selected-text);
+      border-color: var(--accent-blue);
+      font-weight: 700;
+    }
+
+    /* Panel de Control Lateral / Inferior */
+    .control-panel {
+      width: 100%;
+      max-width: 1400px;
+      margin-top: 1.5rem;
+      background: var(--card-bg);
+      border: 2px solid #64748b;
+      border-radius: 12px;
+      padding: 1.5rem;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 1.5rem;
+      gap: 1.2rem;
     }
 
-    .node {
-      background: var(--card-bg);
-      border: 2px solid var(--border);
-      border-radius: 12px;
-      padding: 1.25rem 1.75rem;
-      width: 100%;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-      transition: all 0.3s ease;
-      animation: fadeIn 0.4s ease-out forwards;
+    .panel-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.85rem;
+      color: var(--accent-blue);
     }
 
-    .node-start {
-      text-align: center;
-      cursor: pointer;
-      border-color: var(--primary);
-      background: #eff6ff;
-      max-width: 400px;
-    }
-
-    .node-start:hover {
-      background: #dbeafe;
-      transform: translateY(-2px);
-    }
-
-    .title-node {
-      font-weight: 600;
-      font-size: 1.1rem;
-      margin-bottom: 0.75rem;
-      color: var(--primary);
+    .options-group {
       display: flex;
-      align-items: center;
-      gap: 0.5rem;
+      flex-wrap: wrap;
+      gap: 0.6rem;
     }
 
-    .options-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 0.75rem;
-      margin-top: 1rem;
-    }
-
-    .btn-option {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.75rem 1rem;
-      text-align: left;
-      font-size: 0.9rem;
+    .opt-btn {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      padding: 0.5rem 0.9rem;
+      border-radius: 6px;
+      font-family: 'Chakra Petch', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 600;
       cursor: pointer;
       transition: all 0.2s;
     }
 
-    .btn-option:hover {
-      border-color: var(--primary);
-      background: #f1f5f9;
+    .opt-btn:hover {
+      background: #e2e8f0;
+      border-color: var(--accent-blue);
     }
 
-    .btn-option.selected {
-      background: var(--primary);
-      color: white;
-      border-color: var(--primary);
+    .opt-btn.active {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #1d4ed8;
     }
 
-    .input-group {
-      margin-top: 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    input[type="text"], textarea {
-      width: 100%;
-      padding: 0.75rem;
-      border: 1px solid var(--border);
-      border-radius: 8px;
+    /* Ficha Resumen Final */
+    .summary-box {
+      background: #0f172a;
+      color: #f8fafc;
+      border: 2px solid #38bdf8;
+      border-radius: 10px;
+      padding: 1.2rem;
       font-size: 0.95rem;
-      box-sizing: border-box;
+      line-height: 1.6;
     }
 
-    .connector {
-      width: 2px;
-      height: 24px;
-      background-color: var(--primary);
-      animation: expandLine 0.3s ease-out;
+    .summary-box h3 {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.8rem;
+      color: #38bdf8;
+      margin-bottom: 1rem;
     }
 
-    .summary-card {
-      background: #f0fdf4;
-      border: 2px solid var(--accent);
-      border-radius: 12px;
-      padding: 1.5rem;
+    select, input, textarea {
+      font-family: 'Chakra Petch', sans-serif;
       width: 100%;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-    }
-
-    .summary-card h3 {
-      color: #166534;
-      margin-top: 0;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes expandLine {
-      from { height: 0; }
-      to { height: 24px; }
+      padding: 0.6rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 0.9rem;
+      background: #ffffff;
     }
   </style>
 </head>
 <body>
 
   <header>
-    <h1>Exploración de Proyectos de Diseño Industrial</h1>
-    <p>Sigue las ramas del dendrograma para definir tu tema de proyecto o tesis.</p>
+    <h1>Dendrograma de Exploración DI</h1>
+    <p class="subtitle">Selecciona los nodos concéntricos para ramificar y definir tu anteproyecto</p>
   </header>
 
-  <div class="tree-container" id="tree">
-    <!-- Nodo Inicial Centrado -->
-    <div class="node node-start" onclick="iniciarExploracion()" id="start-node">
-      <div style="font-size: 1.2rem; font-weight: bold; color: var(--primary);">🌱 Iniciar Exploración</div>
-      <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">Haz clic aquí para desplegar los 20 campos de aplicación</div>
+  <!-- Dendrograma Circular Interactivo -->
+  <div class="dendrogram-viewport" id="viewport">
+    <svg id="lines-layer"></svg>
+    <div class="nodes-container" id="nodes-container">
+      <!-- Nodo Central -->
+      <div class="node-item node-center" style="left: 50%; top: 50%;" onclick="resetAll()">
+        PROYECTO<br>DISEÑO<br>INDUSTRIAL
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel Guía de Asistencia por Niveles -->
+  <div class="control-panel" id="panel">
+    <div class="panel-title" id="step-indicator">PASO 1: SELECCIONA UN CAMPO EN EL DENDROGRAMA</div>
+    <div id="dynamic-content">
+      <p style="color: var(--text-muted);">Haz clic en cualquiera de los 25 campos orbitales alrededor del centro para iniciar el árbol metodológico.</p>
     </div>
   </div>
 
   <script>
+    // 25 Campos Ampliados de Diseño Industrial
     const campos = [
-      "1. Salud e Instrumental Quirúrgico", "2. Diseño Aeroespacial y Defensa",
+      "1. Salud e Instrumental Quirúrgico", "2. Aeroespacial y Defensa",
       "3. Agrotecnología y Campo", "4. Movilidad y Vehículos",
-      "5. Mobiliario e Interiorismo Industrial", "6. Mecanismos y Dispositivos Mecánicos",
-      "7. Luminarias e Iluminación", "8. Audio, Electrónica de Consumo e IoT",
-      "9. Wearables, Accesorios y EPP", "10. Sostenibilidad, Biomateriales y Packaging",
-      "11. Acción Humanitaria y Desastres", "12. Deporte, Fitness y Recreación",
-      "13. Gerontología y Diseño Universal", "14. Gastronomía y Equipamiento HORECA",
-      "15. Infancias, Juguetes y Neurodivergencia", "16. Cuidado Animal y Veterinaria",
-      "17. Industria Marina y Subacuática", "18. Museografía, Escenografía y Retail",
-      "19. Construcción y Hábitat Prefabricado", "20. Productos de Lujo y Micro-precisión"
+      "5. Mobiliario e Interiorismo", "6. Mecanismos y Dispositivos",
+      "7. Luminarias e Iluminación", "8. Audio, Electrónica e IoT",
+      "9. Wearables y EPP", "10. Biomateriales y Packaging",
+      "11. Acción Humanitaria y Desastres", "12. Deporte y Fitness",
+      "13. Gerontología y Diseño Universal", "14. Gastronomía y HORECA",
+      "15. Infancias y Neurodivergencia", "16. Cuidado Animal y Veterinaria",
+      "17. Industria Marina y Subacuática", "18. Museografía y Retail",
+      "19. Hábitat y Construcción", "20. Productos de Lujo y Precisión",
+      "21. Bio-fabricación y Biodiseño", "22. Robótica de Servicio",
+      "23. Dispositivos Médicos de Apoyo", "24. Equipamiento Urbano Inteligente",
+      "25. Sistemas y Servicios de Economía Circular"
     ];
 
-    let estado = {
-      campo: "",
-      usuarioContexto: "",
-      materialProceso: "",
-      problematica: ""
+    // Opciones Guiadas para Nivel 2: Usuario y Contexto
+    const tiposUsuario = [
+      "Operador / Técnico Especializado", "Paciente / Persona en Rehabilitación",
+      "Consumidor Final (B2C)", "Trabajador de Industria Pesada / Campo",
+      "Personal Médico / Quirúrgico", "Niños / Estudiantes",
+      "Adulto Mayor / Movilidad Reducida", "Comercio / Personal HORECA"
+    ];
+
+    const tiposContexto = [
+      "Entorno Clínico / Quirófano Esterilizado", "Ambiente de Intemperie / Clima Extremo",
+      "Taller / Planta de Manufactura", "Hogar / Entorno Doméstico",
+      "Espacio Público / Urbano de Alto Tráfico", "Campo Agrícola / Misión Itinerante",
+      "Vehículo / En Movimiento Constante"
+    ];
+
+    // Opciones Guiadas para Nivel 3: Procesos de Manufactura
+    const procesosManufactura = {
+      "Tradicionales - Polímeros & Moldes": [
+        "Inyección de Plástico", "Moldeo por Soplado", "Rotomoldeo", "Termoformado de Lámina"
+      ],
+      "Tradicionales - Metales & Maderables": [
+        "Maquinado Convencional (Torno/Fresadora)", "Fundición en Arena / Die-Casting",
+        "Estampado y Troquelado de Lámina", "Carpintería Técnica y Ensamble"
+      ],
+      "Digitales & Aditivos (Fabricación 3D)": [
+        "Extrusión de Pasta / Biomateriales (Sargazo/Cerámica)", "Impresión 3D FDM (Filamento)",
+        "Impresión 3D SLA/DLP (Resina)", "Sinterizado Láser SLS (Polvo)", "Ruteado CNC 3/5 Ejes", "Corte y Grabado Láser"
+      ],
+      "Sostenibles & Emergentes": [
+        "Compresión de Plásticos Reciclados", "Bio-moldeo por Micelio / Algas",
+        "Sistemas Conectados / Smart Materials (SMA)", "Termofusión y Soldadura Ultrasónica"
+      ]
     };
 
-    function crearConector() {
-      const line = document.createElement("div");
-      line.className = "connector";
-      return line;
-    }
+    // Opciones Guiadas para Nivel 4: Matriz de Problemáticas
+    const matricesProblemas = [
+      "Ergonómico / Físico: Fatiga biomecánica, riesgo de lesión o agarre deficiente.",
+      "Operativo / Técnico: Ineficiencia en procesos, ensambles complejos o fallas mecánicas.",
+      "Ambiental / Ecológico: Generación de residuos plásticos, alta huella de carbono o materiales no reciclables.",
+      "Socioeconómico: Alto costo de adquisición, falta de accesibilidad o producción poco viable.",
+      "Emocional / Perceptual: Mala experiencia de usuario (UX), baja identidad visual o alta carga cognitiva."
+    ];
 
-    function iniciarExploracion() {
-      const tree = document.getElementById("tree");
-      document.getElementById("start-node").style.pointerEvents = "none";
+    // Estado de la Selección
+    let estado = {
+      campo: "",
+      usuario: "",
+      contexto: "",
+      proceso: "",
+      problema: "",
+      detalleLibre: ""
+    };
 
-      tree.appendChild(crearConector());
+    const container = document.getElementById("nodes-container");
+    const svgLayer = document.getElementById("lines-layer");
+    const dynamicContent = document.getElementById("dynamic-content");
+    const stepIndicator = document.getElementById("step-indicator");
 
-      const node1 = document.createElement("div");
-      node1.className = "node";
-      node1.id = "step-1";
-      node1.innerHTML = `
-        <div class="title-node">📌 Nivel 1: Selecciona un Campo de Aplicación</div>
-        <div class="options-grid">
-          ${campos.map(c => `<button class="btn-option" onclick="seleccionarCampo('${c}', this)">${c}</button>`).join('')}
-        </div>
-      `;
-      tree.appendChild(node1);
-    }
+    // Inicializar Dendrograma Circular
+    function renderCircularDendrogram() {
+      const total = campos.length;
+      const radius = 340; // Radio del círculo de campos
+      const centerX = container.offsetWidth / 2 || 700;
+      const centerY = container.offsetHeight / 2 || 450;
 
-    function seleccionarCampo(campoNombre, btn) {
-      estado.campo = campoNombre;
-      marcarSeleccionado("step-1", btn);
-      limpiarRamasPosteriores("step-1");
+      svgLayer.innerHTML = "";
 
-      const tree = document.getElementById("tree");
-      tree.appendChild(crearConector());
+      campos.forEach((campo, index) => {
+        const angle = (index / total) * 2 * Math.PI;
+        const x = centerX + radius * Math.cos(angle);
+        const y = centerY + radius * Math.sin(angle);
 
-      const node2 = document.createElement("div");
-      node2.className = "node";
-      node2.id = "step-2";
-      node2.innerHTML = `
-        <div class="title-node">👤 Nivel 2: Usuario Objetivo y Contexto de Uso</div>
-        <p style="font-size:0.9rem; color:var(--text-muted);">¿A quién está dirigido y en qué entorno operará? (Ej. Restaurantes/Comensales, Agricultores en campo, Quirófano...)</p>
-        <div class="input-group">
-          <input type="text" id="input-usuario" placeholder="Escribe el usuario y el entorno..." oninput="validarPaso2()">
-        </div>
-      `;
-      tree.appendChild(node2);
-    }
+        // Crear Línea SVG desde el centro
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", centerX);
+        line.setAttribute("y1", centerY);
+        line.setAttribute("x2", x);
+        line.setAttribute("y2", y);
+        line.setAttribute("stroke", "#cbd5e1");
+        line.setAttribute("stroke-width", "1.5");
+        line.setAttribute("id", `line-${index}`);
+        svgLayer.appendChild(line);
 
-    function validarPaso2() {
-      const val = document.getElementById("input-usuario").value;
-      estado.usuarioContexto = val;
-
-      if (val.trim().length > 3 && !document.getElementById("step-3")) {
-        const tree = document.getElementById("tree");
-        tree.appendChild(crearConector());
-
-        const node3 = document.createElement("div");
-        node3.className = "node";
-        node3.id = "step-3";
-        node3.innerHTML = `
-          <div class="title-node">🛠️ Nivel 3: Material, Tecnología o Proceso de Manufactura</div>
-          <p style="font-size:0.9rem; color:var(--text-muted);">¿Qué materiales o tecnologías te interesa explorar?</p>
-          <div class="options-grid">
-            <button class="btn-option" onclick="seleccionarMaterial('Biomateriales (Sargazo / Residuos) + Impresión 3D', this)">Biomateriales (Sargazo) + Impresión 3D</button>
-            <button class="btn-option" onclick="seleccionarMaterial('Mecanizado CNC / Corte Láser', this)">Mecanizado CNC / Corte Láser</button>
-            <button class="btn-option" onclick="seleccionarMaterial('Inyección de Polímeros / Moldeo', this)">Inyección de Polímeros / Moldeo</button>
-            <button class="btn-option" onclick="seleccionarMaterial('Conformado de Metales / Cerámica', this)">Conformado de Metales / Cerámica</button>
-          </div>
-          <div class="input-group" style="margin-top:0.75rem;">
-            <input type="text" placeholder="O escribe tu propia combinación de materiales/procesos..." oninput="estado.materialProceso = this.value; validarPaso3();">
-          </div>
-        `;
-        tree.appendChild(node3);
-      }
-    }
-
-    function seleccionarMaterial(materialText, btn) {
-      estado.materialProceso = materialText;
-      marcarSeleccionado("step-3", btn);
-      validarPaso3();
-    }
-
-    function validarPaso3() {
-      if (!document.getElementById("step-4")) {
-        const tree = document.getElementById("tree");
-        tree.appendChild(crearConector());
-
-        const node4 = document.createElement("div");
-        node4.className = "node";
-        node4.id = "step-4";
-        node4.innerHTML = `
-          <div class="title-node">❓ Nivel 4: Problemática o Necesidad a Resolver</div>
-          <p style="font-size:0.9rem; color:var(--text-muted);">¿Qué falla, deficiencia o área de oportunidad detectaste?</p>
-          <div class="input-group">
-            <textarea id="input-prob" rows="3" placeholder="Ej. Los restaurantes generan residuos plásticos de un solo uso en las mesas y carecen de accesorios sostenibles con identidad local..." oninput="validarPaso4()"></textarea>
-          </div>
-        `;
-        tree.appendChild(node4);
-      }
-    }
-
-    function validarPaso4() {
-      const val = document.getElementById("input-prob").value;
-      estado.problematica = val;
-
-      if (val.trim().length > 5 && !document.getElementById("step-summary")) {
-        const tree = document.getElementById("tree");
-        tree.appendChild(crearConector());
-
-        const summary = document.createElement("div");
-        summary.className = "summary-card";
-        summary.id = "step-summary";
-        summary.innerHTML = `
-          <h3>📋 Ficha Resumen de la Propuesta de Proyecto</h3>
-          <p><strong>• Campo seleccionado:</strong> <span id="res-campo"></span></p>
-          <p><strong>• Usuario y Entorno:</strong> <span id="res-usuario"></span></p>
-          <p><strong>• Materiales / Procesos:</strong> <span id="res-material"></span></p>
-          <p><strong>• Problemática:</strong> <span id="res-prob"></span></p>
-          <hr style="border:0; border-top:1px solid #bbf7d0; margin:1rem 0;">
-          <p style="font-size:0.9rem; color:#15803d; font-weight:600;">
-            ¡Excelente avance! Copia este resumen para entregarlo a tu profesor o llevarlo a tu bitácora de taller.
-          </p>
-        `;
-        tree.appendChild(summary);
-      }
-
-      if (document.getElementById("step-summary")) {
-        document.getElementById("res-campo").innerText = estado.campo;
-        document.getElementById("res-usuario").innerText = estado.usuarioContexto;
-        document.getElementById("res-material").innerText = estado.materialProceso;
-        document.getElementById("res-prob").innerText = estado.problematica;
-      }
-    }
-
-    function marcarSeleccionado(stepId, btn) {
-      const parent = document.getElementById(stepId);
-      parent.querySelectorAll('.btn-option').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
-    }
-
-    function limpiarRamasPosteriores(stepId) {
-      const tree = document.getElementById("tree");
-      let borrar = false;
-      Array.from(tree.children).forEach(child => {
-        if (borrar) tree.removeChild(child);
-        if (child.id === stepId) borrar = true;
+        // Crear Nodo
+        const node = document.createElement("div");
+        node.className = "node-item";
+        node.style.left = `${x}px`;
+        node.style.top = `${y}px`;
+        node.innerText = campo;
+        node.setAttribute("id", `node-${index}`);
+        node.onclick = () => selectCampo(campo, index, x, y);
+        container.appendChild(node);
       });
     }
+
+    function selectCampo(nombreCampo, index, x, y) {
+      estado.campo = nombreCampo;
+
+      // Resaltar Línea y Nodo seleccionado
+      document.querySelectorAll(".node-item").forEach(n => n.classList.remove("selected"));
+      document.querySelectorAll("line").forEach(l => {
+        l.setAttribute("stroke", "#cbd5e1");
+        l.setAttribute("stroke-width", "1.5");
+      });
+
+      const selNode = document.getElementById(`node-${index}`);
+      if (selNode) selNode.classList.add("selected");
+
+      const selLine = document.getElementById(`line-${index}`);
+      if (selLine) {
+        selLine.setAttribute("stroke", "#2563eb");
+        selLine.setAttribute("stroke-width", "3");
+      }
+
+      renderNivel2();
+    }
+
+    // Nivel 2: Usuario y Contexto (Guiado)
+    function renderNivel2() {
+      stepIndicator.innerText = "PASO 2: DEFINE EL USUARIO Y EL CONTEXTO OPERATIVO";
+      dynamicContent.innerHTML = `
+        <p><strong>Campo Seleccionado:</strong> <span style="color:#2563eb;">${estado.campo}</span></p>
+        <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:0.5rem;">Selecciona una opción sugerida para cada variable o escribe tu perfil personalizado:</p>
+        
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+          <div>
+            <label style="font-weight:700; font-size:0.85rem;">1. Perfil de Usuario Objetivo:</label>
+            <select onchange="estado.usuario = this.value; checkNivel2Ready();">
+              <option value="">-- Selecciona un Perfil --</option>
+              ${tiposUsuario.map(u => `<option value="${u}">${u}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label style="font-weight:700; font-size:0.85rem;">2. Entorno / Contexto de Uso:</label>
+            <select onchange="estado.contexto = this.value; checkNivel2Ready();">
+              <option value="">-- Selecciona un Entorno --</option>
+              ${tiposContexto.map(c => `<option value="${c}">${c}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:0.8rem;">
+          <input type="text" placeholder="Opcional: Especifica más detalles (Ej. Restaurantes de mariscos locales)..." oninput="estado.detalleLibre = this.value;">
+        </div>
+        <button class="opt-btn active" style="margin-top:1rem; width:100%;" onclick="renderNivel3()">Avanzar al Nivel 3: Materiales y Procesos ➔</button>
+      `;
+    }
+
+    function checkNivel2Ready() {
+      // Permite fluidez
+    }
+
+    // Nivel 3: Procesos de Transformación
+    function renderNivel3() {
+      stepIndicator.innerText = "PASO 3: SELECCIONA EL MATERIAL Y PROCESO DE MANUFACTURA";
+      
+      let htmlProcesos = "";
+      for (const [categoria, lista] of Object.entries(procesosManufactura)) {
+        htmlProcesos += `
+          <div style="margin-bottom:0.8rem;">
+            <div style="font-weight:700; font-size:0.85rem; color:#1e293b; margin-bottom:0.3rem;">${categoria}</div>
+            <div class="options-group">
+              ${lista.map(p => `<button class="opt-btn ${estado.proceso === p ? 'active':''}" onclick="setProceso('${p}', this)">${p}</button>`).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      dynamicContent.innerHTML = `
+        <p><strong>Ruta Actual:</strong> ${estado.campo} | ${estado.usuario || 'Usuario por definir'} en ${estado.contexto || 'Entorno por definir'}</p>
+        <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:0.8rem;">Elige la tecnología de producción que deseas investigar para tu proyecto:</p>
+        ${htmlProcesos}
+        <button class="opt-btn active" style="margin-top:1rem; width:100%;" onclick="renderNivel4()">Avanzar al Nivel 4: Problemática y Oportunidad ➔</button>
+      `;
+    }
+
+    function setProceso(proc, btn) {
+      estado.proceso = proc;
+      document.querySelectorAll("#dynamic-content .opt-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+    }
+
+    // Nivel 4: Problemática
+    function renderNivel4() {
+      stepIndicator.innerText = "PASO 4: ENFOCA LA PROBLEMÁTICA Y OPORTUNIDAD DE DISEÑO";
+      dynamicContent.innerHTML = `
+        <p style="font-size:0.9rem; color:var(--text-muted);">Selecciona la matriz de enfoque que mejor describa la necesidad a resolver:</p>
+        <div style="display:flex; flex-direction:column; gap:0.6rem; margin-bottom:1rem;">
+          ${matricesProblemas.map(m => `
+            <button class="opt-btn ${estado.problema === m ? 'active':''}" style="text-align:left;" onclick="setProblema('${m}', this)">
+              ${m}
+            </button>
+          `).join('')}
+        </div>
+        <label style="font-weight:700; font-size:0.85rem;">Descripción específica del problema (Texto libre):</label>
+        <textarea rows="3" placeholder="Ej. Los restaurantes locales acumulan residuos de un solo uso y requieren accesorios sostenibles de mesa fabricados con bio-pastas..." oninput="estado.detalleLibre = this.value"></textarea>
+        <button class="opt-btn active" style="margin-top:1rem; width:100%; background:#10b981; border-color:#059669;" onclick="renderFichaFinal()">Generar Ficha de Anteproyecto 🚀</button>
+      `;
+    }
+
+    function setProblema(prob, btn) {
+      estado.problema = prob;
+      document.querySelectorAll("#dynamic-content .opt-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+    }
+
+    // Ficha Final
+    function renderFichaFinal() {
+      stepIndicator.innerText = "FICHA DE ANTEPROYECTO ACADÉMICO GENERADA";
+      dynamicContent.innerHTML = `
+        <div class="summary-box">
+          <h3>📌 ANTEPROYECTO DE DISEÑO INDUSTRIAL</h3>
+          <p><strong>• Campo de Aplicación:</strong> ${estado.campo || 'No especificado'}</p>
+          <p><strong>• Usuario Objetivo:</strong> ${estado.usuario || 'General'}</p>
+          <p><strong>• Entorno de Uso:</strong> ${estado.contexto || 'No especificado'}</p>
+          <p><strong>• Proceso / Material:</strong> ${estado.proceso || 'Por definir en taller'}</p>
+          <p><strong>• Problemática Enfocada:</strong> ${estado.problema || 'No especificada'}</p>
+          <p><strong>• Observaciones Adicionales:</strong> ${estado.detalleLibre || 'N/A'}</p>
+          <hr style="border-color:#334155; margin:0.8rem 0;">
+          <p style="color:#38bdf8; font-weight:700; font-size:0.85rem;">
+            💡 Pregunta Rectora (HMW): "¿Cómo podríamos diseñar un producto/sistema para ${estado.usuario || 'el usuario'} en ${estado.contexto || 'el contexto'} mediante ${estado.proceso || 'tecnología de manufactura'} para resolver ${estado.problema || 'la problemática'}?"
+          </p>
+        </div>
+        <button class="opt-btn" style="margin-top:0.8rem;" onclick="resetAll()">🔄 Reiniciar Exploración</button>
+      `;
+    }
+
+    function resetAll() {
+      estado = { campo: "", usuario: "", contexto: "", proceso: "", problema: "", detalleLibre: "" };
+      document.querySelectorAll(".node-item").forEach(n => n.classList.remove("selected"));
+      document.querySelectorAll("line").forEach(l => l.setAttribute("stroke", "#cbd5e1"));
+      stepIndicator.innerText = "PASO 1: SELECCIONA UN CAMPO EN EL DENDROGRAMA";
+      dynamicContent.innerHTML = `<p style="color: var(--text-muted);">Haz clic en cualquiera de los 25 campos orbitales alrededor del centro para iniciar el árbol metodológico.</p>`;
+    }
+
+    // Renderizado al cargar
+    window.onload = () => {
+      setTimeout(renderCircularDendrogram, 100);
+    };
+    window.onresize = renderCircularDendrogram;
   </script>
 </body>
 </html>
