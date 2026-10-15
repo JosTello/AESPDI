@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Explorador de Proyectos - Diseño Industrial</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --accent: #10b981;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .tree-container {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .node {
+      background: var(--card-bg);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.75rem;
+      width: 100%;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s ease;
+      animation: fadeIn 0.4s ease-out forwards;
+    }
+
+    .node-start {
+      text-align: center;
+      cursor: pointer;
+      border-color: var(--primary);
+      background: #eff6ff;
+      max-width: 400px;
+    }
+
+    .node-start:hover {
+      background: #dbeafe;
+      transform: translateY(-2px);
+    }
+
+    .title-node {
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin-bottom: 0.75rem;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .btn-option {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-option:hover {
+      border-color: var(--primary);
+      background: #f1f5f9;
+    }
+
+    .btn-option.selected {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .input-group {
+      margin-top: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      box-sizing: border-box;
+    }
+
+    .connector {
+      width: 2px;
+      height: 24px;
+      background-color: var(--primary);
+      animation: expandLine 0.3s ease-out;
+    }
+
+    .summary-card {
+      background: #f0fdf4;
+      border: 2px solid var(--accent);
+      border-radius: 12px;
+      padding: 1.5rem;
+      width: 100%;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .summary-card h3 {
+      color: #166534;
+      margin-top: 0;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes expandLine {
+      from { height: 0; }
+      to { height: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Exploración de Proyectos de Diseño Industrial</h1>
+    <p>Sigue las ramas del dendrograma para definir tu tema de proyecto o tesis.</p>
+  </header>
+
+  <div class="tree-container" id="tree">
+    <!-- Nodo Inicial Centrado -->
+    <div class="node node-start" onclick="iniciarExploracion()" id="start-node">
+      <div style="font-size: 1.2rem; font-weight: bold; color: var(--primary);">🌱 Iniciar Exploración</div>
+      <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">Haz clic aquí para desplegar los 20 campos de aplicación</div>
+    </div>
+  </div>
+
+  <script>
+    const campos = [
+      "1. Salud e Instrumental Quirúrgico", "2. Diseño Aeroespacial y Defensa",
+      "3. Agrotecnología y Campo", "4. Movilidad y Vehículos",
+      "5. Mobiliario e Interiorismo Industrial", "6. Mecanismos y Dispositivos Mecánicos",
+      "7. Luminarias e Iluminación", "8. Audio, Electrónica de Consumo e IoT",
+      "9. Wearables, Accesorios y EPP", "10. Sostenibilidad, Biomateriales y Packaging",
+      "11. Acción Humanitaria y Desastres", "12. Deporte, Fitness y Recreación",
+      "13. Gerontología y Diseño Universal", "14. Gastronomía y Equipamiento HORECA",
+      "15. Infancias, Juguetes y Neurodivergencia", "16. Cuidado Animal y Veterinaria",
+      "17. Industria Marina y Subacuática", "18. Museografía, Escenografía y Retail",
+      "19. Construcción y Hábitat Prefabricado", "20. Productos de Lujo y Micro-precisión"
+    ];
+
+    let estado = {
+      campo: "",
+      usuarioContexto: "",
+      materialProceso: "",
+      problematica: ""
+    };
+
+    function crearConector() {
+      const line = document.createElement("div");
+      line.className = "connector";
+      return line;
+    }
+
+    function iniciarExploracion() {
+      const tree = document.getElementById("tree");
+      document.getElementById("start-node").style.pointerEvents = "none";
+
+      tree.appendChild(crearConector());
+
+      const node1 = document.createElement("div");
+      node1.className = "node";
+      node1.id = "step-1";
+      node1.innerHTML = `
+        <div class="title-node">📌 Nivel 1: Selecciona un Campo de Aplicación</div>
+        <div class="options-grid">
+          ${campos.map(c => `<button class="btn-option" onclick="seleccionarCampo('${c}', this)">${c}</button>`).join('')}
+        </div>
+      `;
+      tree.appendChild(node1);
+    }
+
+    function seleccionarCampo(campoNombre, btn) {
+      estado.campo = campoNombre;
+      marcarSeleccionado("step-1", btn);
+      limpiarRamasPosteriores("step-1");
+
+      const tree = document.getElementById("tree");
+      tree.appendChild(crearConector());
+
+      const node2 = document.createElement("div");
+      node2.className = "node";
+      node2.id = "step-2";
+      node2.innerHTML = `
+        <div class="title-node">👤 Nivel 2: Usuario Objetivo y Contexto de Uso</div>
+        <p style="font-size:0.9rem; color:var(--text-muted);">¿A quién está dirigido y en qué entorno operará? (Ej. Restaurantes/Comensales, Agricultores en campo, Quirófano...)</p>
+        <div class="input-group">
+          <input type="text" id="input-usuario" placeholder="Escribe el usuario y el entorno..." oninput="validarPaso2()">
+        </div>
+      `;
+      tree.appendChild(node2);
+    }
+
+    function validarPaso2() {
+      const val = document.getElementById("input-usuario").value;
+      estado.usuarioContexto = val;
+
+      if (val.trim().length > 3 && !document.getElementById("step-3")) {
+        const tree = document.getElementById("tree");
+        tree.appendChild(crearConector());
+
+        const node3 = document.createElement("div");
+        node3.className = "node";
+        node3.id = "step-3";
+        node3.innerHTML = `
+          <div class="title-node">🛠️ Nivel 3: Material, Tecnología o Proceso de Manufactura</div>
+          <p style="font-size:0.9rem; color:var(--text-muted);">¿Qué materiales o tecnologías te interesa explorar?</p>
+          <div class="options-grid">
+            <button class="btn-option" onclick="seleccionarMaterial('Biomateriales (Sargazo / Residuos) + Impresión 3D', this)">Biomateriales (Sargazo) + Impresión 3D</button>
+            <button class="btn-option" onclick="seleccionarMaterial('Mecanizado CNC / Corte Láser', this)">Mecanizado CNC / Corte Láser</button>
+            <button class="btn-option" onclick="seleccionarMaterial('Inyección de Polímeros / Moldeo', this)">Inyección de Polímeros / Moldeo</button>
+            <button class="btn-option" onclick="seleccionarMaterial('Conformado de Metales / Cerámica', this)">Conformado de Metales / Cerámica</button>
+          </div>
+          <div class="input-group" style="margin-top:0.75rem;">
+            <input type="text" placeholder="O escribe tu propia combinación de materiales/procesos..." oninput="estado.materialProceso = this.value; validarPaso3();">
+          </div>
+        `;
+        tree.appendChild(node3);
+      }
+    }
+
+    function seleccionarMaterial(materialText, btn) {
+      estado.materialProceso = materialText;
+      marcarSeleccionado("step-3", btn);
+      validarPaso3();
+    }
+
+    function validarPaso3() {
+      if (!document.getElementById("step-4")) {
+        const tree = document.getElementById("tree");
+        tree.appendChild(crearConector());
+
+        const node4 = document.createElement("div");
+        node4.className = "node";
+        node4.id = "step-4";
+        node4.innerHTML = `
+          <div class="title-node">❓ Nivel 4: Problemática o Necesidad a Resolver</div>
+          <p style="font-size:0.9rem; color:var(--text-muted);">¿Qué falla, deficiencia o área de oportunidad detectaste?</p>
+          <div class="input-group">
+            <textarea id="input-prob" rows="3" placeholder="Ej. Los restaurantes generan residuos plásticos de un solo uso en las mesas y carecen de accesorios sostenibles con identidad local..." oninput="validarPaso4()"></textarea>
+          </div>
+        `;
+        tree.appendChild(node4);
+      }
+    }
+
+    function validarPaso4() {
+      const val = document.getElementById("input-prob").value;
+      estado.problematica = val;
+
+      if (val.trim().length > 5 && !document.getElementById("step-summary")) {
+        const tree = document.getElementById("tree");
+        tree.appendChild(crearConector());
+
+        const summary = document.createElement("div");
+        summary.className = "summary-card";
+        summary.id = "step-summary";
+        summary.innerHTML = `
+          <h3>📋 Ficha Resumen de la Propuesta de Proyecto</h3>
+          <p><strong>• Campo seleccionado:</strong> <span id="res-campo"></span></p>
+          <p><strong>• Usuario y Entorno:</strong> <span id="res-usuario"></span></p>
+          <p><strong>• Materiales / Procesos:</strong> <span id="res-material"></span></p>
+          <p><strong>• Problemática:</strong> <span id="res-prob"></span></p>
+          <hr style="border:0; border-top:1px solid #bbf7d0; margin:1rem 0;">
+          <p style="font-size:0.9rem; color:#15803d; font-weight:600;">
+            ¡Excelente avance! Copia este resumen para entregarlo a tu profesor o llevarlo a tu bitácora de taller.
+          </p>
+        `;
+        tree.appendChild(summary);
+      }
+
+      if (document.getElementById("step-summary")) {
+        document.getElementById("res-campo").innerText = estado.campo;
+        document.getElementById("res-usuario").innerText = estado.usuarioContexto;
+        document.getElementById("res-material").innerText = estado.materialProceso;
+        document.getElementById("res-prob").innerText = estado.problematica;
+      }
+    }
+
+    function marcarSeleccionado(stepId, btn) {
+      const parent = document.getElementById(stepId);
+      parent.querySelectorAll('.btn-option').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    }
+
+    function limpiarRamasPosteriores(stepId) {
+      const tree = document.getElementById("tree");
+      let borrar = false;
+      Array.from(tree.children).forEach(child => {
+        if (borrar) tree.removeChild(child);
+        if (child.id === stepId) borrar = true;
+      });
+    }
+  </script>
+</body>
+</html>
