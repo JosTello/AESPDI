@@ -3,23 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dendrograma 3D Orgánico - Diseño Industrial</title>
-  <!-- Fuentes: Press Start 2P (Pixel) y Chakra Petch (Techno) -->
+  <title>Taxonomía & Dendrograma de Diseño Industrial</title>
+  
+  <!-- Tipografías: Instrument Serif (Titulares), Space Mono (Metadatos) e Inter (Cuerpo) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,400;0,600;0,700;1,400&family=Press+Start+2P&display=swap" rel="stylesheet">
-  
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
   <style>
     :root {
-      --bg-main: #cbd5e1; /* Gris claro industrial */
-      --card-bg: #f8fafc;
-      --text-main: #0f172a;
-      --text-muted: #475569;
-      --accent-blue: #2563eb;
-      --accent-cyan: #0284c7;
-      --border-color: #94a3b8;
-      --selected-bg: #1e293b;
-      --selected-text: #38bdf8;
+      --bg-color: #f5f4f0;
+      --card-bg: rgba(255, 255, 255, 0.85);
+      --card-border: #e2e0d8;
+      --text-main: #18181b;
+      --text-muted: #71717a;
+      --accent-red: #c92a2a;
+      --accent-blue: #1d4ed8;
+      --accent-purple: #7e22ce;
+      --accent-amber: #b45309;
+      --line-inactive: #d4d4d8;
+      --font-serif: 'Instrument Serif', Georgia, serif;
+      --font-mono: 'Space Mono', monospace;
+      --font-sans: 'Inter', sans-serif;
+    }
+
+    [data-theme="dark"] {
+      --bg-color: #121316;
+      --card-bg: rgba(24, 25, 29, 0.88);
+      --card-border: #27272a;
+      --text-main: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --line-inactive: #3f3f46;
     }
 
     * {
@@ -29,565 +43,625 @@
     }
 
     body {
-      background-color: var(--bg-main);
+      background-color: var(--bg-color);
       color: var(--text-main);
-      font-family: 'Chakra Petch', sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 1.5rem;
-      overflow-x: hidden;
-    }
-
-    header {
-      text-align: center;
-      margin-bottom: 1.5rem;
-    }
-
-    h1 {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 1.25rem;
-      color: #1e293b;
-      margin-bottom: 0.8rem;
-      text-transform: uppercase;
-      line-height: 1.6;
-      text-shadow: 2px 2px 0px #94a3b8;
-    }
-
-    p.subtitle {
-      font-size: 0.95rem;
-      color: var(--text-muted);
-      font-weight: 600;
-      letter-spacing: 0.5px;
-    }
-
-    /* Espacio 3D del Dendrograma */
-    .dendrogram-viewport {
-      position: relative;
-      width: 100%;
-      max-width: 1300px;
-      height: 600px;
-      background: var(--card-bg);
-      border: 3px solid #64748b;
-      border-radius: 16px;
-      box-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.2);
+      font-family: var(--font-sans);
+      width: 100vw;
+      height: 100vh;
       overflow: hidden;
-      perspective: 1000px;
+      user-select: none;
+      transition: background-color 0.3s ease;
     }
 
-    canvas#canvas3d {
+    /* Lienzo Infinito con Pan & Zoom */
+    #viewport {
+      width: 100%;
+      height: 100%;
       position: absolute;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
+      cursor: grab;
+    }
+
+    #viewport:active {
+      cursor: grabbing;
+    }
+
+    #canvas-world {
+      position: absolute;
+      transform-origin: 0 0;
+      will-change: transform;
+    }
+
+    svg#connections-svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 5000px;
+      height: 5000px;
       pointer-events: none;
       z-index: 1;
     }
 
-    .nodes-container {
+    /* Nodos y Capas */
+    .nodes-layer {
       position: absolute;
-      width: 100%;
-      height: 100%;
+      top: 0;
+      left: 0;
+      width: 5000px;
+      height: 5000px;
       z-index: 2;
     }
 
-    /* Estilos de Nodos en Espacio 3D */
-    .node-item {
+    .taxonomy-node {
       position: absolute;
       transform: translate(-50%, -50%);
-      background: #ffffff;
-      border: 2px solid var(--border-color);
-      border-radius: 8px;
-      padding: 0.45rem 0.8rem;
-      font-size: 0.8rem;
-      font-weight: 600;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
       cursor: pointer;
-      transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
-      white-space: nowrap;
-      user-select: none;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
 
-    .node-item:hover {
-      border-color: var(--accent-blue) !important;
-      background: #eff6ff !important;
-      z-index: 1000 !important;
-      box-shadow: 0 0 15px rgba(37, 99, 235, 0.5);
-    }
-
-    .node-center {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 0.65rem;
-      background: #1e293b;
-      color: #38bdf8;
-      border: 3px solid var(--accent-blue);
-      padding: 0.8rem;
+    /* Nivel 1: Nodos Raíz (Operación / Campo) */
+    .node-level-1 {
+      width: 110px;
+      height: 110px;
       border-radius: 50%;
-      text-align: center;
-      width: 130px;
-      height: 130px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 0 20px rgba(37, 99, 235, 0.5);
-      z-index: 500;
-    }
-
-    .node-item.selected {
-      background: var(--selected-bg) !important;
-      color: var(--selected-text) !important;
-      border-color: #38bdf8 !important;
-      font-weight: 700;
-      box-shadow: 0 0 20px rgba(56, 189, 248, 0.8);
-    }
-
-    /* Panel de Control Interactivo */
-    .control-panel {
-      width: 100%;
-      max-width: 1300px;
-      margin-top: 1.5rem;
       background: var(--card-bg);
-      border: 2px solid #64748b;
-      border-radius: 12px;
-      padding: 1.5rem;
+      border: 2px solid var(--text-main);
       display: flex;
       flex-direction: column;
-      gap: 1.2rem;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 0.5rem;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
     }
 
-    .panel-title {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 0.85rem;
-      color: var(--accent-blue);
+    .node-level-1 .node-num {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--accent-red);
+      font-weight: 700;
+      letter-spacing: 1px;
     }
 
-    .options-group {
+    .node-level-1 .node-title {
+      font-family: var(--font-serif);
+      font-size: 1.15rem;
+      line-height: 1.1;
+      margin-top: 2px;
+    }
+
+    /* Nivel 2: Dominio / Contexto */
+    .node-level-2 {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 0.4rem 0.8rem;
       display: flex;
-      flex-wrap: wrap;
-      gap: 0.6rem;
+      align-items: center;
+      gap: 0.4rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+      backdrop-filter: blur(6px);
     }
 
-    .opt-btn {
-      background: #f1f5f9;
-      border: 1px solid #cbd5e1;
-      padding: 0.5rem 0.9rem;
+    .node-level-2 .icon-tag {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      background: var(--accent-blue);
+    }
+
+    /* Nivel 3: Técnica / Proceso */
+    .node-level-3 {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 0.4rem 0.9rem;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Nivel 4: Galería / Moodboard Cards */
+    .node-card-image {
+      width: 100px;
+      height: 130px;
       border-radius: 6px;
-      font-family: 'Chakra Petch', sans-serif;
-      font-size: 0.88rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
+      background-size: cover;
+      background-position: center;
+      border: 1px solid var(--card-border);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+      transition: transform 0.2s;
     }
 
-    .opt-btn:hover {
-      background: #e2e8f0;
-      border-color: var(--accent-blue);
+    .node-card-image:hover {
+      transform: scale(1.1) translateY(-4px);
+      z-index: 100;
     }
 
-    .opt-btn.active {
-      background: #2563eb;
-      color: #ffffff;
-      border-color: #1d4ed8;
+    .taxonomy-node:hover {
+      border-color: var(--accent-red) !important;
+      transform: translate(-50%, -50%) scale(1.08);
     }
 
-    .summary-box {
-      background: #0f172a;
-      color: #f8fafc;
-      border: 2px solid #38bdf8;
-      border-radius: 10px;
-      padding: 1.2rem;
-      font-size: 0.95rem;
-      line-height: 1.6;
+    .taxonomy-node.active-path {
+      border-color: var(--accent-red) !important;
+      box-shadow: 0 0 0 3px rgba(201, 42, 42, 0.2);
     }
 
-    .summary-box h3 {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 0.8rem;
-      color: #38bdf8;
-      margin-bottom: 1rem;
+    /* HUD Flotante (Tarjeta de Estado Superior Izquierda) */
+    .hud-card {
+      position: fixed;
+      top: 1.5rem;
+      left: 1.5rem;
+      width: 320px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 1.25rem;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      z-index: 1000;
+      font-family: var(--font-mono);
     }
 
-    select, input, textarea {
-      font-family: 'Chakra Petch', sans-serif;
-      width: 100%;
-      padding: 0.65rem;
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      font-size: 0.9rem;
-      background: #ffffff;
-    }
-
-    .controls-bar {
+    .hud-header {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 0.8rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-top: 0.5rem;
-      font-size: 0.85rem;
+    }
+
+    .hud-step {
+      margin-bottom: 0.75rem;
+    }
+
+    .hud-step-code {
+      font-size: 0.62rem;
+      color: var(--accent-red);
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .hud-step-title {
+      font-family: var(--font-serif);
+      font-size: 1.35rem;
+      color: var(--text-main);
+      line-height: 1.1;
+    }
+
+    .hud-step-desc {
+      font-size: 0.75rem;
       color: var(--text-muted);
+      font-family: var(--font-sans);
+      margin-top: 2px;
+    }
+
+    /* Botones de Control de la App */
+    .controls-overlay {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      display: flex;
+      gap: 0.5rem;
+      z-index: 1000;
+    }
+
+    .btn-action {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: all 0.2s;
+    }
+
+    .btn-action:hover {
+      background: var(--text-main);
+      color: var(--bg-color);
+    }
+
+    /* Modal Ficha de Anteproyecto */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+
+    .modal-box {
+      background: var(--bg-color);
+      border: 1px solid var(--card-border);
+      width: 90%;
+      max-width: 600px;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+    }
+
+    .modal-box h2 {
+      font-family: var(--font-serif);
+      font-size: 2rem;
+      margin-bottom: 1rem;
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <h1>Dendrograma 3D de Exploración DI</h1>
-    <p class="subtitle">Navegación espacial interactiva con rotación orgánica</p>
-  </header>
+  <!-- HUD Flotante Estilo Taxonomía -->
+  <div class="hud-card" id="hud">
+    <div class="hud-header">
+      <span>TAXONOMÍA DI</span>
+      <span id="theme-toggle" style="cursor:pointer;" onclick="toggleTheme()">☯ MODO</span>
+    </div>
 
-  <!-- Espacio de Renderizado 3D -->
-  <div class="dendrogram-viewport" id="viewport">
-    <canvas id="canvas3d"></canvas>
-    <div class="nodes-container" id="nodes-container">
-      <!-- Nodo Central 3D -->
-      <div class="node-item node-center" id="node-center" style="left: 50%; top: 50%;" onclick="resetAll()">
-        PROYECTO<br>DISEÑO<br>INDUSTRIAL
-      </div>
+    <div class="hud-step">
+      <div class="hud-step-code">01 CAMPO DE APLICACIÓN</div>
+      <div class="hud-step-title" id="hud-campo">Selecciona un Nodo</div>
+    </div>
+
+    <div class="hud-step">
+      <div class="hud-step-code">02 ENTORNO Y USUARIO</div>
+      <div class="hud-step-desc" id="hud-contexto">Haz clic en una rama para explorar</div>
+    </div>
+
+    <div class="hud-step">
+      <div class="hud-step-code">03 PROCESO Y MATERIAL</div>
+      <div class="hud-step-desc" id="hud-proceso">Sin definir</div>
+    </div>
+
+    <div class="hud-step">
+      <div class="hud-step-code">04 PROBLEMÁTICA / HMW</div>
+      <div class="hud-step-desc" id="hud-problema">Sin definir</div>
     </div>
   </div>
 
-  <div class="controls-bar" style="width: 100%; max-width: 1300px;">
-    <span>🌐 Órbita 3D activa | 25 Campos de Aplicación</span>
-    <button class="opt-btn" onclick="toggleRotation()" id="btn-pause">⏸️ Pausar / Reanudar Giro</button>
+  <!-- Lienzo Infinito interactivo -->
+  <div id="viewport">
+    <div id="canvas-world">
+      <svg id="connections-svg"></svg>
+      <div class="nodes-layer" id="nodes-layer"></div>
+    </div>
   </div>
 
-  <!-- Panel de Control Metodológico -->
-  <div class="control-panel" id="panel">
-    <div class="panel-title" id="step-indicator">PASO 1: SELECCIONA UN CAMPO EN EL DENDROGRAMA 3D</div>
-    <div id="dynamic-content">
-      <p style="color: var(--text-muted);">Haz clic en cualquiera de los 25 nodos flotantes en el espacio 3D para definir el punto de partida de tu anteproyecto.</p>
+  <!-- Controles del Lienzo -->
+  <div class="controls-overlay">
+    <button class="btn-action" onclick="resetZoom()">[100%] Centrar</button>
+    <button class="btn-action" onclick="abrirFicha()">📋 Ver Ficha</button>
+  </div>
+
+  <!-- Modal Ficha de Anteproyecto -->
+  <div class="modal-overlay" id="modal-ficha">
+    <div class="modal-box">
+      <h2 id="modal-titulo">Ficha de Anteproyecto</h2>
+      <div id="modal-cuerpo" style="font-family: var(--font-mono); font-size: 0.85rem; line-height: 1.6;"></div>
+      <button class="btn-action" style="margin-top: 1.5rem; width: 100%;" onclick="cerrarFicha()">Cerrar</button>
     </div>
   </div>
 
   <script>
-    const campos = [
-      "1. Salud e Instrumental Quirúrgico", "2. Aeroespacial y Defensa",
-      "3. Agrotecnología y Campo", "4. Movilidad y Vehículos",
-      "5. Mobiliario e Interiorismo", "6. Mecanismos y Dispositivos",
-      "7. Luminarias e Iluminación", "8. Audio, Electrónica e IoT",
-      "9. Wearables y EPP", "10. Biomateriales y Packaging",
-      "11. Acción Humanitaria y Desastres", "12. Deporte y Fitness",
-      "13. Gerontología y Diseño Universal", "14. Gastronomía y HORECA",
-      "15. Infancias y Neurodivergencia", "16. Cuidado Animal y Veterinaria",
-      "17. Industria Marina y Subacuática", "18. Museografía y Retail",
-      "19. Hábitat y Construcción", "20. Productos de Lujo y Precisión",
-      "21. Bio-fabricación y Biodiseño", "22. Robótica de Servicio",
-      "23. Dispositivos Médicos de Apoyo", "24. Equipamiento Urbano Inteligente",
-      "25. Sistemas y Economía Circular"
-    ];
-
-    const tiposUsuario = [
-      "Operador / Técnico Especializado", "Paciente / Persona en Rehabilitación",
-      "Consumidor Final (B2C)", "Trabajador de Industria Pesada / Campo",
-      "Personal Médico / Quirúrgico", "Niños / Estudiantes",
-      "Adulto Mayor / Movilidad Reducida", "Comercio / Personal HORECA"
-    ];
-
-    const tiposContexto = [
-      "Entorno Clínico / Quirófano Esterilizado", "Ambiente de Intemperie / Clima Extremo",
-      "Taller / Planta de Manufactura", "Hogar / Entorno Doméstico",
-      "Espacio Público / Urbano de Alto Tráfico", "Campo Agrícola / Misión Itinerante",
-      "Vehículo / En Movimiento Constante"
-    ];
-
-    const procesosManufactura = {
-      "Tradicionales - Polímeros & Moldes": [
-        "Inyección de Plástico", "Moldeo por Soplado", "Rotomoldeo", "Termoformado de Lámina"
-      ],
-      "Tradicionales - Metales & Maderables": [
-        "Maquinado Convencional (Torno/Fresadora)", "Fundición en Arena / Die-Casting",
-        "Estampado y Troquelado de Lámina", "Carpintería Técnica y Ensamble"
-      ],
-      "Digitales & Aditivos (Fabricación 3D)": [
-        "Extrusión de Pasta / Biomateriales (Sargazo/Cerámica)", "Impresión 3D FDM (Filamento)",
-        "Impresión 3D SLA/DLP (Resina)", "Sinterizado Láser SLS (Polvo)", "Ruteado CNC 3/5 Ejes", "Corte y Grabado Láser"
-      ],
-      "Sostenibles & Emergentes": [
-        "Compresión de Plásticos Reciclados", "Bio-moldeo por Micelio / Algas",
-        "Sistemas Conectados / Smart Materials (SMA)", "Termofusión y Soldadura Ultrasónica"
+    // Estructura Taxonómica Completa de Diseño Industrial
+    const taxonomyTree = {
+      id: "root",
+      title: "Diseño Industrial",
+      children: [
+        {
+          id: "c1",
+          code: "01",
+          title: "Sostenibilidad & Biomateriales",
+          contextos: [
+            {
+              title: "Gastronomía & HORECA (Restaurantes)",
+              procesos: [
+                {
+                  title: "Extrusión de Bio-pasta (Sargazo)",
+                  problemas: ["Acumulación de plásticos de un solo uso en mesa", "Falta de accesorios sostenibles con identidad local"],
+                  images: ["https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=300&q=80", "https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?auto=format&fit=crop&w=300&q=80"]
+                },
+                { title: "Bio-moldeo por Micelio/Algas", problemas: ["Empaques térmicos no biodegradables"], images: [] }
+              ]
+            },
+            {
+              title: "Packaging & Logística Circular",
+              procesos: [
+                { title: "Termoformado de Biopolímeros", problemas: ["Embalajes desechables de alto impacto"], images: [] }
+              ]
+            }
+          ]
+        },
+        {
+          id: "c2",
+          code: "02",
+          title: "Salud e Instrumental Quirúrgico",
+          contextos: [
+            {
+              title: "Quirófano & Misiones Médicas Rurales",
+              procesos: [
+                { title: "Impresión 3D SLA / Grado Médico", problemas: ["Infecciones por desinfección ineficiente de transporte"], images: [] }
+              ]
+            }
+          ]
+        },
+        {
+          id: "c3",
+          code: "03",
+          title: "Movilidad & Transportes",
+          contextos: [
+            {
+              title: "Micromovilidad Urbana Inclusiva",
+              procesos: [
+                { title: "Ruteado CNC de Aluminio / Fibra", problemas: ["Inaccesibilidad para usuarios con movilidad reducida"], images: [] }
+              ]
+            }
+          ]
+        },
+        {
+          id: "c4",
+          code: "04",
+          title: "Agrotecnología & Campo",
+          contextos: [
+            {
+              title: "Pequeños Productores / Poscosecha",
+              procesos: [
+                { title: "Rotomoldeo de Polímeros Reciclados", problemas: ["Pérdida de grano por humedad en almacenamiento local"], images: [] }
+              ]
+            }
+          ]
+        },
+        {
+          id: "c5",
+          code: "05",
+          title: "Mobiliario & Hábitat",
+          contextos: [
+            {
+              title: "Espacios de Trabajo Modulares",
+              procesos: [
+                { title: "Carpintería Técnica CNC 5 Ejes", problemas: ["Mobiliario rígido sin adaptación ergonómica"], images: [] }
+              ]
+            }
+          ]
+        }
       ]
     };
 
-    const matricesProblemas = [
-      "Ergonómico / Físico: Fatiga biomecánica, riesgo de lesión o agarre deficiente.",
-      "Operativo / Técnico: Ineficiencia en procesos, ensambles complejos o fallas mecánicas.",
-      "Ambiental / Ecológico: Generación de residuos plásticos, alta huella de carbono o materiales no reciclables.",
-      "Socioeconómico: Alto costo de adquisición, falta de accesibilidad o producción poco viable.",
-      "Emocional / Perceptual: Mala experiencia de usuario (UX), baja identidad visual o alta carga cognitiva."
-    ];
+    // Estado del Lienzo y Pan/Zoom
+    let panX = 150;
+    let panY = 100;
+    let zoom = 1;
+    let isDragging = false;
+    let startX, startY;
 
-    let estado = {
-      campo: "",
-      usuario: "",
-      contexto: "",
-      proceso: "",
-      problema: "",
-      detalleLibre: ""
+    let selectedPath = {
+      campo: null,
+      contexto: null,
+      proceso: null,
+      problema: null
     };
 
-    // Variables del Motor 3D
-    const container = document.getElementById("nodes-container");
     const viewport = document.getElementById("viewport");
-    const canvas = document.getElementById("canvas3d");
-    const ctx = canvas.getContext("2d");
+    const world = document.getElementById("canvas-world");
+    const svg = document.getElementById("connections-svg");
+    const nodesLayer = document.getElementById("nodes-layer");
 
-    let isRotating = true;
-    let angleY = 0;
-    let angleX = 0.3; // Inclinación fija para vista tridimensional
-    let nodeElements = [];
-    let nodes3D = [];
-    let selectedIndex = -1;
+    // Inicializar Pan & Zoom
+    viewport.addEventListener("mousedown", (e) => {
+      if(e.target.closest('.taxonomy-node')) return;
+      isDragging = true;
+      startX = e.clientX - panX;
+      startY = e.clientY - panY;
+    });
 
-    const RADIUS_X = 420;
-    const RADIUS_Z = 320;
-    const FOCAL_LENGTH = 600;
+    window.addEventListener("mousemove", (e) => {
+      if (!isDragging) return;
+      panX = e.clientX - startX;
+      panY = e.clientY - startY;
+      updateTransform();
+    });
 
-    function init3DNodes() {
-      container.querySelectorAll(".node-item:not(.node-center)").forEach(e => e.remove());
-      nodeElements = [];
-      nodes3D = [];
+    window.addEventListener("mouseup", () => isDragging = false);
 
-      const total = campos.length;
+    viewport.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      const zoomFactor = e.deltaY < 0 ? 1.08 : 0.92;
+      zoom = Math.min(Math.max(0.4, zoom * zoomFactor), 2.5);
+      updateTransform();
+    });
 
-      campos.forEach((campo, i) => {
-        const theta = (i / total) * Math.PI * 2;
-        // Variación ondular en Y para efecto esférico/orgánico
-        const yOffset = Math.sin(theta * 3) * 60;
-
-        nodes3D.push({
-          x0: Math.cos(theta) * RADIUS_X,
-          y0: yOffset,
-          z0: Math.sin(theta) * RADIUS_Z,
-          nombre: campo,
-          index: i
-        });
-
-        const el = document.createElement("div");
-        el.className = "node-item";
-        el.innerText = campo;
-        el.onclick = () => selectNode3D(i, campo);
-        container.appendChild(el);
-        nodeElements.push(el);
-      });
-
-      resizeCanvas();
-      animate3D();
+    function updateTransform() {
+      world.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
     }
 
-    function resizeCanvas() {
-      canvas.width = viewport.offsetWidth;
-      canvas.height = viewport.offsetHeight;
+    function resetZoom() {
+      panX = 200;
+      panY = 120;
+      zoom = 1;
+      updateTransform();
     }
 
-    function toggleRotation() {
-      isRotating = !isRotating;
-      document.getElementById("btn-pause").innerText = isRotating ? "⏸️ Pausar Giro" : "▶️ Reanudar Giro";
-    }
+    // Renderizar Árbol Taxonómico
+    function renderTaxonomy() {
+      nodesLayer.innerHTML = "";
+      svg.innerHTML = "";
 
-    function animate3D() {
-      if (isRotating) {
-        angleY += 0.005; // Velocidad de rotación orgánica
-      }
+      let startXPos = 120;
+      let startYPos = 180;
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      taxonomyTree.children.forEach((campo, i) => {
+        const x1 = startXPos;
+        const y1 = startYPos + (i * 260);
 
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
-
-      const cosY = Math.cos(angleY);
-      const sinY = Math.sin(angleY);
-      const cosX = Math.cos(angleX);
-      const sinX = Math.sin(angleX);
-
-      let projectedNodes = [];
-
-      nodes3D.forEach((n, i) => {
-        // Rotación alrededor del eje Y
-        let x1 = n.x0 * cosY - n.z0 * sinY;
-        let z1 = n.x0 * sinY + n.z0 * cosY;
-
-        // Inclinación alrededor del eje X
-        let y2 = n.y0 * cosX - z1 * sinX;
-        let z2 = n.y0 * sinX + z1 * cosX;
-
-        // Proyección de perspectiva 3D
-        let scale = FOCAL_LENGTH / (FOCAL_LENGTH + z2);
-        let screenX = centerX + x1 * scale;
-        let screenY = centerY + y2 * scale;
-
-        projectedNodes.push({
-          element: nodeElements[i],
-          x: screenX,
-          y: screenY,
-          z: z2,
-          scale: scale,
-          index: i
-        });
-
-        // Dibujar Líneas Conectoras 3D desde el Centro
-        ctx.beginPath();
-        ctx.moveTo(centerX, centerY);
-        ctx.lineTo(screenX, screenY);
-
-        if (i === selectedIndex) {
-          ctx.strokeStyle = "#38bdf8";
-          ctx.lineWidth = 3;
-        } else {
-          // Color y opacidad graduados según profundidad
-          let alpha = Math.max(0.1, Math.min(0.6, (scale - 0.6) * 1.5));
-          ctx.strokeStyle = `rgba(148, 163, 184, ${alpha})`;
-          ctx.lineWidth = Math.max(0.8, scale * 1.5);
-        }
-        ctx.stroke();
-      });
-
-      // Ordenar capas (Z-index) para oclusión correcta
-      projectedNodes.sort((a, b) => b.z - a.z);
-
-      projectedNodes.forEach(p => {
-        const el = p.element;
-        el.style.left = `${p.x}px`;
-        el.style.top = `${p.y}px`;
-        
-        // Efecto de escala y opacidad según profundidad Z
-        const opacity = Math.max(0.35, Math.min(1, (p.scale - 0.5) * 1.8));
-        el.style.transform = `translate(-50%, -50%) scale(${p.scale * 0.95})`;
-        el.style.opacity = opacity;
-        el.style.zIndex = Math.floor(p.scale * 100);
-
-        if (p.index === selectedIndex) {
-          el.classList.add("selected");
-        } else {
-          el.classList.remove("selected");
-        }
-      });
-
-      requestAnimationFrame(animate3D);
-    }
-
-    function selectNode3D(index, nombreCampo) {
-      selectedIndex = index;
-      estado.campo = nombreCampo;
-      renderNivel2();
-    }
-
-    // Nivel 2: Usuario y Contexto
-    function renderNivel2() {
-      document.getElementById("step-indicator").innerText = "PASO 2: DEFINE EL USUARIO Y EL CONTEXTO OPERATIVO";
-      document.getElementById("dynamic-content").innerHTML = `
-        <p><strong>Campo Seleccionado:</strong> <span style="color:#2563eb;">${estado.campo}</span></p>
-        <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:0.5rem;">Selecciona una opción sugerida o escribe tu perfil personalizado:</p>
-        
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
-          <div>
-            <label style="font-weight:700; font-size:0.85rem;">1. Perfil de Usuario Objetivo:</label>
-            <select onchange="estado.usuario = this.value;">
-              <option value="">-- Selecciona un Perfil --</option>
-              ${tiposUsuario.map(u => `<option value="${u}">${u}</option>`).join('')}
-            </select>
-          </div>
-          <div>
-            <label style="font-weight:700; font-size:0.85rem;">2. Entorno / Contexto de Uso:</label>
-            <select onchange="estado.contexto = this.value;">
-              <option value="">-- Selecciona un Entorno --</option>
-              ${tiposContexto.map(c => `<option value="${c}">${c}</option>`).join('')}
-            </select>
-          </div>
-        </div>
-        <div style="margin-top:0.8rem;">
-          <input type="text" placeholder="Opcional: Especifica más detalles (Ej. Restaurantes de mariscos locales)..." oninput="estado.detalleLibre = this.value;">
-        </div>
-        <button class="opt-btn active" style="margin-top:1rem; width:100%;" onclick="renderNivel3()">Avanzar al Nivel 3: Materiales y Procesos ➔</button>
-      `;
-    }
-
-    // Nivel 3: Procesos de Manufactura
-    function renderNivel3() {
-      document.getElementById("step-indicator").innerText = "PASO 3: SELECCIONA EL MATERIAL Y PROCESO DE MANUFACTURA";
-      
-      let htmlProcesos = "";
-      for (const [categoria, lista] of Object.entries(procesosManufactura)) {
-        htmlProcesos += `
-          <div style="margin-bottom:0.8rem;">
-            <div style="font-weight:700; font-size:0.85rem; color:#1e293b; margin-bottom:0.3rem;">${categoria}</div>
-            <div class="options-group">
-              ${lista.map(p => `<button class="opt-btn ${estado.proceso === p ? 'active':''}" onclick="setProceso('${p}', this)">${p}</button>`).join('')}
-            </div>
-          </div>
+        // Render Nodo Nivel 1 (Campo)
+        const node1 = document.createElement("div");
+        node1.className = `taxonomy-node node-level-1 ${selectedPath.campo === campo ? 'active-path' : ''}`;
+        node1.style.left = `${x1}px`;
+        node1.style.top = `${y1}px`;
+        node1.innerHTML = `
+          <div class="node-num">${campo.code} CAMPO</div>
+          <div class="node-title">${campo.title}</div>
         `;
+        node1.onclick = () => selectCampo(campo);
+        nodesLayer.appendChild(node1);
+
+        // Render Contextos (Nivel 2)
+        if (campo.contextos) {
+          campo.contextos.forEach((ctxItem, j) => {
+            const x2 = x1 + 280;
+            const y2 = y1 - 60 + (j * 110);
+
+            drawBezierLink(x1, y1, x2, y2, selectedPath.campo === campo);
+
+            const node2 = document.createElement("div");
+            node2.className = `taxonomy-node node-level-2 ${selectedPath.contexto === ctxItem ? 'active-path' : ''}`;
+            node2.style.left = `${x2}px`;
+            node2.style.top = `${y2}px`;
+            node2.innerHTML = `
+              <div class="icon-tag"></div>
+              <span>${ctxItem.title}</span>
+            `;
+            node2.onclick = () => selectContexto(campo, ctxItem);
+            nodesLayer.appendChild(node2);
+
+            // Render Procesos (Nivel 3)
+            if (ctxItem.procesos && selectedPath.contexto === ctxItem) {
+              ctxItem.procesos.forEach((procItem, k) => {
+                const x3 = x2 + 300;
+                const y3 = y2 - 40 + (k * 90);
+
+                drawBezierLink(x2, y2, x3, y3, selectedPath.proceso === procItem);
+
+                const node3 = document.createElement("div");
+                node3.className = `taxonomy-node node-level-3 ${selectedPath.proceso === procItem ? 'active-path' : ''}`;
+                node3.style.left = `${x3}px`;
+                node3.style.top = `${y3}px`;
+                node3.innerHTML = `⚙️ ${procItem.title}`;
+                node3.onclick = () => selectProceso(campo, ctxItem, procItem);
+                nodesLayer.appendChild(node3);
+
+                // Render Galería de Referencias (Nivel 4)
+                if (procItem.images && procItem.images.length > 0) {
+                  procItem.images.forEach((imgUrl, imgIdx) => {
+                    const x4 = x3 + 220;
+                    const y4 = y3 - 30 + (imgIdx * 140);
+
+                    drawBezierLink(x3, y3, x4, y4, true);
+
+                    const card = document.createElement("div");
+                    card.className = "taxonomy-node node-card-image";
+                    card.style.left = `${x4}px`;
+                    card.style.top = `${y4}px`;
+                    card.style.backgroundImage = `url(${imgUrl})`;
+                    nodesLayer.appendChild(card);
+                  });
+                }
+              });
+            }
+          });
+        }
+      });
+    }
+
+    // Dibujar Conexiones Bézier
+    function drawBezierLink(x1, y1, x2, y2, isActive) {
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      const dx = (x2 - x1) * 0.5;
+      const d = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
+      
+      path.setAttribute("d", d);
+      path.setAttribute("fill", "none");
+      path.setAttribute("stroke", isActive ? "var(--accent-red)" : "var(--line-inactive)");
+      path.setAttribute("stroke-width", isActive ? "2.5" : "1");
+      if (!isActive) path.setAttribute("stroke-dasharray", "4 4");
+      
+      svg.appendChild(path);
+    }
+
+    // Lógica de Selección
+    function selectCampo(campo) {
+      selectedPath.campo = campo;
+      selectedPath.contexto = null;
+      selectedPath.proceso = null;
+      updateHUD();
+      renderTaxonomy();
+    }
+
+    function selectContexto(campo, ctxItem) {
+      selectedPath.campo = campo;
+      selectedPath.contexto = ctxItem;
+      selectedPath.proceso = null;
+      updateHUD();
+      renderTaxonomy();
+    }
+
+    function selectProceso(campo, ctxItem, procItem) {
+      selectedPath.campo = campo;
+      selectedPath.contexto = ctxItem;
+      selectedPath.proceso = procItem;
+      selectedPath.problema = procItem.problemas[0] || "Por definir";
+      updateHUD();
+      renderTaxonomy();
+    }
+
+    function updateHUD() {
+      document.getElementById("hud-campo").innerText = selectedPath.campo ? selectedPath.campo.title : "Selecciona un Nodo";
+      document.getElementById("hud-contexto").innerText = selectedPath.contexto ? selectedPath.contexto.title : "Sin definir";
+      document.getElementById("hud-proceso").innerText = selectedPath.proceso ? selectedPath.proceso.title : "Sin definir";
+      document.getElementById("hud-problema").innerText = selectedPath.problema ? selectedPath.problema : "Sin definir";
+    }
+
+    function toggleTheme() {
+      const currentTheme = document.body.getAttribute("data-theme");
+      if (currentTheme === "dark") {
+        document.body.removeAttribute("data-theme");
+      } else {
+        document.body.setAttribute("data-theme", "dark");
       }
+    }
 
-      document.getElementById("dynamic-content").innerHTML = `
-        <p><strong>Ruta Actual:</strong> ${estado.campo} | ${estado.usuario || 'Usuario por definir'} en ${estado.contexto || 'Entorno por definir'}</p>
-        <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:0.8rem;">Elige la tecnología de producción que deseas investigar para tu proyecto:</p>
-        ${htmlProcesos}
-        <button class="opt-btn active" style="margin-top:1rem; width:100%;" onclick="renderNivel4()">Avanzar al Nivel 4: Problemática y Oportunidad ➔</button>
+    function abrirFicha() {
+      if (!selectedPath.campo) {
+        alert("Por favor selecciona primero un Campo y un Proceso en el árbol.");
+        return;
+      }
+      document.getElementById("modal-titulo").innerText = selectedPath.campo.title;
+      document.getElementById("modal-cuerpo").innerHTML = `
+        <p><strong>• CAMPO DE DISEÑO:</strong> ${selectedPath.campo.title}</p>
+        <p><strong>• ENTORNO Y USUARIO:</strong> ${selectedPath.contexto ? selectedPath.contexto.title : 'N/A'}</p>
+        <p><strong>• TECNOLOGÍA / PROCESO:</strong> ${selectedPath.proceso ? selectedPath.proceso.title : 'N/A'}</p>
+        <p><strong>• PROBLEMÁTICA CLAVE:</strong> ${selectedPath.problema || 'N/A'}</p>
+        <hr style="margin: 1rem 0; border-color: var(--card-border);">
+        <p style="color: var(--accent-red);"><strong>💡 PREGUNTA RECTORA (HMW):</strong><br>
+        ¿Cómo podríamos diseñar un artefacto mediante ${selectedPath.proceso ? selectedPath.proceso.title : 'manufactura técnica'} para ${selectedPath.contexto ? selectedPath.contexto.title : 'el usuario'} que resuelva ${selectedPath.problema || 'la necesidad'}?</p>
       `;
+      document.getElementById("modal-ficha").style.display = "flex";
     }
 
-    function setProceso(proc, btn) {
-      estado.proceso = proc;
-      document.querySelectorAll("#dynamic-content .opt-btn").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
+    function cerrarFicha() {
+      document.getElementById("modal-ficha").style.display = "none";
     }
 
-    // Nivel 4: Problemática
-    function renderNivel4() {
-      document.getElementById("step-indicator").innerText = "PASO 4: ENFOCA LA PROBLEMÁTICA Y OPORTUNIDAD DE DISEÑO";
-      document.getElementById("dynamic-content").innerHTML = `
-        <p style="font-size:0.9rem; color:var(--text-muted);">Selecciona la matriz de enfoque que mejor describa la necesidad a resolver:</p>
-        <div style="display:flex; flex-direction:column; gap:0.6rem; margin-bottom:1rem;">
-          ${matricesProblemas.map(m => `
-            <button class="opt-btn ${estado.problema === m ? 'active':''}" style="text-align:left;" onclick="setProblema('${m}', this)">
-              ${m}
-            </button>
-          `).join('')}
-        </div>
-        <label style="font-weight:700; font-size:0.85rem;">Descripción específica del problema (Texto libre):</label>
-        <textarea rows="3" placeholder="Ej. Los restaurantes locales acumulan residuos de un solo uso y requieren accesorios sostenibles de mesa fabricados con bio-pastas..." oninput="estado.detalleLibre = this.value"></textarea>
-        <button class="opt-btn active" style="margin-top:1rem; width:100%; background:#10b981; border-color:#059669;" onclick="renderFichaFinal()">Generar Ficha de Anteproyecto 🚀</button>
-      `;
-    }
-
-    function setProblema(prob, btn) {
-      estado.problema = prob;
-      document.querySelectorAll("#dynamic-content .opt-btn").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-    }
-
-    // Ficha Final
-    function renderFichaFinal() {
-      document.getElementById("step-indicator").innerText = "FICHA DE ANTEPROYECTO ACADÉMICO GENERADA";
-      document.getElementById("dynamic-content").innerHTML = `
-        <div class="summary-box">
-          <h3>📌 ANTEPROYECTO DE DISEÑO INDUSTRIAL</h3>
-          <p><strong>• Campo de Aplicación:</strong> ${estado.campo || 'No especificado'}</p>
-          <p><strong>• Usuario Objetivo:</strong> ${estado.usuario || 'General'}</p>
-          <p><strong>• Entorno de Uso:</strong> ${estado.contexto || 'No especificado'}</p>
-          <p><strong>• Proceso / Material:</strong> ${estado.proceso || 'Por definir en taller'}</p>
-          <p><strong>• Problemática Enfocada:</strong> ${estado.problema || 'No especificada'}</p>
-          <p><strong>• Observaciones Adicionales:</strong> ${estado.detalleLibre || 'N/A'}</p>
-          <hr style="border-color:#334155; margin:0.8rem 0;">
-          <p style="color:#38bdf8; font-weight:700; font-size:0.85rem;">
-            💡 Pregunta Rectora (HMW): "¿Cómo podríamos diseñar un producto/sistema para ${estado.usuario || 'el usuario'} en ${estado.contexto || 'el contexto'} mediante ${estado.proceso || 'tecnología de manufactura'} para resolver ${estado.problema || 'la problemática'}?"
-          </p>
-        </div>
-        <button class="opt-btn" style="margin-top:0.8rem;" onclick="resetAll()">🔄 Reiniciar Exploración</button>
-      `;
-    }
-
-    function resetAll() {
-      selectedIndex = -1;
-      estado = { campo: "", usuario: "", contexto: "", proceso: "", problema: "", detalleLibre: "" };
-      document.getElementById("step-indicator").innerText = "PASO 1: SELECCIONA UN CAMPO EN EL DENDROGRAMA 3D";
-      document.getElementById("dynamic-content").innerHTML = `<p style="color: var(--text-muted);">Haz clic en cualquiera de los 25 nodos flotantes en el espacio 3D para definir el punto de partida de tu anteproyecto.</p>`;
-    }
-
-    window.addEventListener("resize", resizeCanvas);
     window.onload = () => {
-      init3DNodes();
+      updateTransform();
+      renderTaxonomy();
     };
   </script>
 </body>
