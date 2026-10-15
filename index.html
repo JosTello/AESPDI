@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dendrograma de Selección de Proyecto - Diseño Industrial</title>
+  <title>Dendrograma 3D Orgánico - Diseño Industrial</title>
   <!-- Fuentes: Press Start 2P (Pixel) y Chakra Petch (Techno) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,7 +16,7 @@
       --text-main: #0f172a;
       --text-muted: #475569;
       --accent-blue: #2563eb;
-      --accent-neon: #0284c7;
+      --accent-cyan: #0284c7;
       --border-color: #94a3b8;
       --selected-bg: #1e293b;
       --selected-text: #38bdf8;
@@ -37,17 +37,17 @@
       flex-direction: column;
       align-items: center;
       padding: 1.5rem;
-      overflow-x: auto;
+      overflow-x: hidden;
     }
 
     header {
       text-align: center;
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
     }
 
     h1 {
       font-family: 'Press Start 2P', monospace;
-      font-size: 1.2rem;
+      font-size: 1.25rem;
       color: #1e293b;
       margin-bottom: 0.8rem;
       text-transform: uppercase;
@@ -56,29 +56,27 @@
     }
 
     p.subtitle {
-      font-size: 1rem;
+      font-size: 0.95rem;
       color: var(--text-muted);
       font-weight: 600;
       letter-spacing: 0.5px;
     }
 
-    /* Canvas del Dendrograma Circular */
+    /* Espacio 3D del Dendrograma */
     .dendrogram-viewport {
       position: relative;
       width: 100%;
-      max-width: 1400px;
-      min-height: 900px;
+      max-width: 1300px;
+      height: 600px;
       background: var(--card-bg);
       border: 3px solid #64748b;
       border-radius: 16px;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.2);
       overflow: hidden;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      perspective: 1000px;
     }
 
-    svg#lines-layer {
+    canvas#canvas3d {
       position: absolute;
       top: 0;
       left: 0;
@@ -95,58 +93,60 @@
       z-index: 2;
     }
 
-    /* Estilos de los Nodos */
+    /* Estilos de Nodos en Espacio 3D */
     .node-item {
       position: absolute;
       transform: translate(-50%, -50%);
       background: #ffffff;
       border: 2px solid var(--border-color);
       border-radius: 8px;
-      padding: 0.5rem 0.8rem;
-      font-size: 0.82rem;
+      padding: 0.45rem 0.8rem;
+      font-size: 0.8rem;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.25s ease;
+      transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
       white-space: nowrap;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
       user-select: none;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
 
     .node-item:hover {
-      border-color: var(--accent-blue);
-      background: #eff6ff;
-      transform: translate(-50%, -50%) scale(1.08);
-      z-index: 10;
+      border-color: var(--accent-blue) !important;
+      background: #eff6ff !important;
+      z-index: 1000 !important;
+      box-shadow: 0 0 15px rgba(37, 99, 235, 0.5);
     }
 
     .node-center {
       font-family: 'Press Start 2P', monospace;
-      font-size: 0.7rem;
+      font-size: 0.65rem;
       background: #1e293b;
       color: #38bdf8;
       border: 3px solid var(--accent-blue);
-      padding: 1rem 1.2rem;
+      padding: 0.8rem;
       border-radius: 50%;
       text-align: center;
-      width: 140px;
-      height: 140px;
+      width: 130px;
+      height: 130px;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 0 15px rgba(37, 99, 235, 0.4);
+      box-shadow: 0 0 20px rgba(37, 99, 235, 0.5);
+      z-index: 500;
     }
 
     .node-item.selected {
-      background: var(--selected-bg);
-      color: var(--selected-text);
-      border-color: var(--accent-blue);
+      background: var(--selected-bg) !important;
+      color: var(--selected-text) !important;
+      border-color: #38bdf8 !important;
       font-weight: 700;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.8);
     }
 
-    /* Panel de Control Lateral / Inferior */
+    /* Panel de Control Interactivo */
     .control-panel {
       width: 100%;
-      max-width: 1400px;
+      max-width: 1300px;
       margin-top: 1.5rem;
       background: var(--card-bg);
       border: 2px solid #64748b;
@@ -155,6 +155,7 @@
       display: flex;
       flex-direction: column;
       gap: 1.2rem;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
     }
 
     .panel-title {
@@ -192,7 +193,6 @@
       border-color: #1d4ed8;
     }
 
-    /* Ficha Resumen Final */
     .summary-box {
       background: #0f172a;
       color: #f8fafc;
@@ -213,42 +213,55 @@
     select, input, textarea {
       font-family: 'Chakra Petch', sans-serif;
       width: 100%;
-      padding: 0.6rem;
+      padding: 0.65rem;
       border: 1px solid var(--border-color);
       border-radius: 6px;
       font-size: 0.9rem;
       background: #ffffff;
+    }
+
+    .controls-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
     }
   </style>
 </head>
 <body>
 
   <header>
-    <h1>Dendrograma de Exploración DI</h1>
-    <p class="subtitle">Selecciona los nodos concéntricos para ramificar y definir tu anteproyecto</p>
+    <h1>Dendrograma 3D de Exploración DI</h1>
+    <p class="subtitle">Navegación espacial interactiva con rotación orgánica</p>
   </header>
 
-  <!-- Dendrograma Circular Interactivo -->
+  <!-- Espacio de Renderizado 3D -->
   <div class="dendrogram-viewport" id="viewport">
-    <svg id="lines-layer"></svg>
+    <canvas id="canvas3d"></canvas>
     <div class="nodes-container" id="nodes-container">
-      <!-- Nodo Central -->
-      <div class="node-item node-center" style="left: 50%; top: 50%;" onclick="resetAll()">
+      <!-- Nodo Central 3D -->
+      <div class="node-item node-center" id="node-center" style="left: 50%; top: 50%;" onclick="resetAll()">
         PROYECTO<br>DISEÑO<br>INDUSTRIAL
       </div>
     </div>
   </div>
 
-  <!-- Panel Guía de Asistencia por Niveles -->
+  <div class="controls-bar" style="width: 100%; max-width: 1300px;">
+    <span>🌐 Órbita 3D activa | 25 Campos de Aplicación</span>
+    <button class="opt-btn" onclick="toggleRotation()" id="btn-pause">⏸️ Pausar / Reanudar Giro</button>
+  </div>
+
+  <!-- Panel de Control Metodológico -->
   <div class="control-panel" id="panel">
-    <div class="panel-title" id="step-indicator">PASO 1: SELECCIONA UN CAMPO EN EL DENDROGRAMA</div>
+    <div class="panel-title" id="step-indicator">PASO 1: SELECCIONA UN CAMPO EN EL DENDROGRAMA 3D</div>
     <div id="dynamic-content">
-      <p style="color: var(--text-muted);">Haz clic en cualquiera de los 25 campos orbitales alrededor del centro para iniciar el árbol metodológico.</p>
+      <p style="color: var(--text-muted);">Haz clic en cualquiera de los 25 nodos flotantes en el espacio 3D para definir el punto de partida de tu anteproyecto.</p>
     </div>
   </div>
 
   <script>
-    // 25 Campos Ampliados de Diseño Industrial
     const campos = [
       "1. Salud e Instrumental Quirúrgico", "2. Aeroespacial y Defensa",
       "3. Agrotecnología y Campo", "4. Movilidad y Vehículos",
@@ -262,10 +275,9 @@
       "19. Hábitat y Construcción", "20. Productos de Lujo y Precisión",
       "21. Bio-fabricación y Biodiseño", "22. Robótica de Servicio",
       "23. Dispositivos Médicos de Apoyo", "24. Equipamiento Urbano Inteligente",
-      "25. Sistemas y Servicios de Economía Circular"
+      "25. Sistemas y Economía Circular"
     ];
 
-    // Opciones Guiadas para Nivel 2: Usuario y Contexto
     const tiposUsuario = [
       "Operador / Técnico Especializado", "Paciente / Persona en Rehabilitación",
       "Consumidor Final (B2C)", "Trabajador de Industria Pesada / Campo",
@@ -280,7 +292,6 @@
       "Vehículo / En Movimiento Constante"
     ];
 
-    // Opciones Guiadas para Nivel 3: Procesos de Manufactura
     const procesosManufactura = {
       "Tradicionales - Polímeros & Moldes": [
         "Inyección de Plástico", "Moldeo por Soplado", "Rotomoldeo", "Termoformado de Lámina"
@@ -299,7 +310,6 @@
       ]
     };
 
-    // Opciones Guiadas para Nivel 4: Matriz de Problemáticas
     const matricesProblemas = [
       "Ergonómico / Físico: Fatiga biomecánica, riesgo de lesión o agarre deficiente.",
       "Operativo / Técnico: Ineficiencia en procesos, ensambles complejos o fallas mecánicas.",
@@ -308,7 +318,6 @@
       "Emocional / Perceptual: Mala experiencia de usuario (UX), baja identidad visual o alta carga cognitiva."
     ];
 
-    // Estado de la Selección
     let estado = {
       campo: "",
       usuario: "",
@@ -318,88 +327,170 @@
       detalleLibre: ""
     };
 
+    // Variables del Motor 3D
     const container = document.getElementById("nodes-container");
-    const svgLayer = document.getElementById("lines-layer");
-    const dynamicContent = document.getElementById("dynamic-content");
-    const stepIndicator = document.getElementById("step-indicator");
+    const viewport = document.getElementById("viewport");
+    const canvas = document.getElementById("canvas3d");
+    const ctx = canvas.getContext("2d");
 
-    // Inicializar Dendrograma Circular
-    function renderCircularDendrogram() {
+    let isRotating = true;
+    let angleY = 0;
+    let angleX = 0.3; // Inclinación fija para vista tridimensional
+    let nodeElements = [];
+    let nodes3D = [];
+    let selectedIndex = -1;
+
+    const RADIUS_X = 420;
+    const RADIUS_Z = 320;
+    const FOCAL_LENGTH = 600;
+
+    function init3DNodes() {
+      container.querySelectorAll(".node-item:not(.node-center)").forEach(e => e.remove());
+      nodeElements = [];
+      nodes3D = [];
+
       const total = campos.length;
-      const radius = 340; // Radio del círculo de campos
-      const centerX = container.offsetWidth / 2 || 700;
-      const centerY = container.offsetHeight / 2 || 450;
 
-      svgLayer.innerHTML = "";
+      campos.forEach((campo, i) => {
+        const theta = (i / total) * Math.PI * 2;
+        // Variación ondular en Y para efecto esférico/orgánico
+        const yOffset = Math.sin(theta * 3) * 60;
 
-      campos.forEach((campo, index) => {
-        const angle = (index / total) * 2 * Math.PI;
-        const x = centerX + radius * Math.cos(angle);
-        const y = centerY + radius * Math.sin(angle);
+        nodes3D.push({
+          x0: Math.cos(theta) * RADIUS_X,
+          y0: yOffset,
+          z0: Math.sin(theta) * RADIUS_Z,
+          nombre: campo,
+          index: i
+        });
 
-        // Crear Línea SVG desde el centro
-        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        line.setAttribute("x1", centerX);
-        line.setAttribute("y1", centerY);
-        line.setAttribute("x2", x);
-        line.setAttribute("y2", y);
-        line.setAttribute("stroke", "#cbd5e1");
-        line.setAttribute("stroke-width", "1.5");
-        line.setAttribute("id", `line-${index}`);
-        svgLayer.appendChild(line);
-
-        // Crear Nodo
-        const node = document.createElement("div");
-        node.className = "node-item";
-        node.style.left = `${x}px`;
-        node.style.top = `${y}px`;
-        node.innerText = campo;
-        node.setAttribute("id", `node-${index}`);
-        node.onclick = () => selectCampo(campo, index, x, y);
-        container.appendChild(node);
+        const el = document.createElement("div");
+        el.className = "node-item";
+        el.innerText = campo;
+        el.onclick = () => selectNode3D(i, campo);
+        container.appendChild(el);
+        nodeElements.push(el);
       });
+
+      resizeCanvas();
+      animate3D();
     }
 
-    function selectCampo(nombreCampo, index, x, y) {
-      estado.campo = nombreCampo;
+    function resizeCanvas() {
+      canvas.width = viewport.offsetWidth;
+      canvas.height = viewport.offsetHeight;
+    }
 
-      // Resaltar Línea y Nodo seleccionado
-      document.querySelectorAll(".node-item").forEach(n => n.classList.remove("selected"));
-      document.querySelectorAll("line").forEach(l => {
-        l.setAttribute("stroke", "#cbd5e1");
-        l.setAttribute("stroke-width", "1.5");
-      });
+    function toggleRotation() {
+      isRotating = !isRotating;
+      document.getElementById("btn-pause").innerText = isRotating ? "⏸️ Pausar Giro" : "▶️ Reanudar Giro";
+    }
 
-      const selNode = document.getElementById(`node-${index}`);
-      if (selNode) selNode.classList.add("selected");
-
-      const selLine = document.getElementById(`line-${index}`);
-      if (selLine) {
-        selLine.setAttribute("stroke", "#2563eb");
-        selLine.setAttribute("stroke-width", "3");
+    function animate3D() {
+      if (isRotating) {
+        angleY += 0.005; // Velocidad de rotación orgánica
       }
 
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+
+      const cosY = Math.cos(angleY);
+      const sinY = Math.sin(angleY);
+      const cosX = Math.cos(angleX);
+      const sinX = Math.sin(angleX);
+
+      let projectedNodes = [];
+
+      nodes3D.forEach((n, i) => {
+        // Rotación alrededor del eje Y
+        let x1 = n.x0 * cosY - n.z0 * sinY;
+        let z1 = n.x0 * sinY + n.z0 * cosY;
+
+        // Inclinación alrededor del eje X
+        let y2 = n.y0 * cosX - z1 * sinX;
+        let z2 = n.y0 * sinX + z1 * cosX;
+
+        // Proyección de perspectiva 3D
+        let scale = FOCAL_LENGTH / (FOCAL_LENGTH + z2);
+        let screenX = centerX + x1 * scale;
+        let screenY = centerY + y2 * scale;
+
+        projectedNodes.push({
+          element: nodeElements[i],
+          x: screenX,
+          y: screenY,
+          z: z2,
+          scale: scale,
+          index: i
+        });
+
+        // Dibujar Líneas Conectoras 3D desde el Centro
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(screenX, screenY);
+
+        if (i === selectedIndex) {
+          ctx.strokeStyle = "#38bdf8";
+          ctx.lineWidth = 3;
+        } else {
+          // Color y opacidad graduados según profundidad
+          let alpha = Math.max(0.1, Math.min(0.6, (scale - 0.6) * 1.5));
+          ctx.strokeStyle = `rgba(148, 163, 184, ${alpha})`;
+          ctx.lineWidth = Math.max(0.8, scale * 1.5);
+        }
+        ctx.stroke();
+      });
+
+      // Ordenar capas (Z-index) para oclusión correcta
+      projectedNodes.sort((a, b) => b.z - a.z);
+
+      projectedNodes.forEach(p => {
+        const el = p.element;
+        el.style.left = `${p.x}px`;
+        el.style.top = `${p.y}px`;
+        
+        // Efecto de escala y opacidad según profundidad Z
+        const opacity = Math.max(0.35, Math.min(1, (p.scale - 0.5) * 1.8));
+        el.style.transform = `translate(-50%, -50%) scale(${p.scale * 0.95})`;
+        el.style.opacity = opacity;
+        el.style.zIndex = Math.floor(p.scale * 100);
+
+        if (p.index === selectedIndex) {
+          el.classList.add("selected");
+        } else {
+          el.classList.remove("selected");
+        }
+      });
+
+      requestAnimationFrame(animate3D);
+    }
+
+    function selectNode3D(index, nombreCampo) {
+      selectedIndex = index;
+      estado.campo = nombreCampo;
       renderNivel2();
     }
 
-    // Nivel 2: Usuario y Contexto (Guiado)
+    // Nivel 2: Usuario y Contexto
     function renderNivel2() {
-      stepIndicator.innerText = "PASO 2: DEFINE EL USUARIO Y EL CONTEXTO OPERATIVO";
-      dynamicContent.innerHTML = `
+      document.getElementById("step-indicator").innerText = "PASO 2: DEFINE EL USUARIO Y EL CONTEXTO OPERATIVO";
+      document.getElementById("dynamic-content").innerHTML = `
         <p><strong>Campo Seleccionado:</strong> <span style="color:#2563eb;">${estado.campo}</span></p>
-        <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:0.5rem;">Selecciona una opción sugerida para cada variable o escribe tu perfil personalizado:</p>
+        <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:0.5rem;">Selecciona una opción sugerida o escribe tu perfil personalizado:</p>
         
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
           <div>
             <label style="font-weight:700; font-size:0.85rem;">1. Perfil de Usuario Objetivo:</label>
-            <select onchange="estado.usuario = this.value; checkNivel2Ready();">
+            <select onchange="estado.usuario = this.value;">
               <option value="">-- Selecciona un Perfil --</option>
               ${tiposUsuario.map(u => `<option value="${u}">${u}</option>`).join('')}
             </select>
           </div>
           <div>
             <label style="font-weight:700; font-size:0.85rem;">2. Entorno / Contexto de Uso:</label>
-            <select onchange="estado.contexto = this.value; checkNivel2Ready();">
+            <select onchange="estado.contexto = this.value;">
               <option value="">-- Selecciona un Entorno --</option>
               ${tiposContexto.map(c => `<option value="${c}">${c}</option>`).join('')}
             </select>
@@ -412,13 +503,9 @@
       `;
     }
 
-    function checkNivel2Ready() {
-      // Permite fluidez
-    }
-
-    // Nivel 3: Procesos de Transformación
+    // Nivel 3: Procesos de Manufactura
     function renderNivel3() {
-      stepIndicator.innerText = "PASO 3: SELECCIONA EL MATERIAL Y PROCESO DE MANUFACTURA";
+      document.getElementById("step-indicator").innerText = "PASO 3: SELECCIONA EL MATERIAL Y PROCESO DE MANUFACTURA";
       
       let htmlProcesos = "";
       for (const [categoria, lista] of Object.entries(procesosManufactura)) {
@@ -432,7 +519,7 @@
         `;
       }
 
-      dynamicContent.innerHTML = `
+      document.getElementById("dynamic-content").innerHTML = `
         <p><strong>Ruta Actual:</strong> ${estado.campo} | ${estado.usuario || 'Usuario por definir'} en ${estado.contexto || 'Entorno por definir'}</p>
         <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:0.8rem;">Elige la tecnología de producción que deseas investigar para tu proyecto:</p>
         ${htmlProcesos}
@@ -448,8 +535,8 @@
 
     // Nivel 4: Problemática
     function renderNivel4() {
-      stepIndicator.innerText = "PASO 4: ENFOCA LA PROBLEMÁTICA Y OPORTUNIDAD DE DISEÑO";
-      dynamicContent.innerHTML = `
+      document.getElementById("step-indicator").innerText = "PASO 4: ENFOCA LA PROBLEMÁTICA Y OPORTUNIDAD DE DISEÑO";
+      document.getElementById("dynamic-content").innerHTML = `
         <p style="font-size:0.9rem; color:var(--text-muted);">Selecciona la matriz de enfoque que mejor describa la necesidad a resolver:</p>
         <div style="display:flex; flex-direction:column; gap:0.6rem; margin-bottom:1rem;">
           ${matricesProblemas.map(m => `
@@ -472,8 +559,8 @@
 
     // Ficha Final
     function renderFichaFinal() {
-      stepIndicator.innerText = "FICHA DE ANTEPROYECTO ACADÉMICO GENERADA";
-      dynamicContent.innerHTML = `
+      document.getElementById("step-indicator").innerText = "FICHA DE ANTEPROYECTO ACADÉMICO GENERADA";
+      document.getElementById("dynamic-content").innerHTML = `
         <div class="summary-box">
           <h3>📌 ANTEPROYECTO DE DISEÑO INDUSTRIAL</h3>
           <p><strong>• Campo de Aplicación:</strong> ${estado.campo || 'No especificado'}</p>
@@ -492,18 +579,16 @@
     }
 
     function resetAll() {
+      selectedIndex = -1;
       estado = { campo: "", usuario: "", contexto: "", proceso: "", problema: "", detalleLibre: "" };
-      document.querySelectorAll(".node-item").forEach(n => n.classList.remove("selected"));
-      document.querySelectorAll("line").forEach(l => l.setAttribute("stroke", "#cbd5e1"));
-      stepIndicator.innerText = "PASO 1: SELECCIONA UN CAMPO EN EL DENDROGRAMA";
-      dynamicContent.innerHTML = `<p style="color: var(--text-muted);">Haz clic en cualquiera de los 25 campos orbitales alrededor del centro para iniciar el árbol metodológico.</p>`;
+      document.getElementById("step-indicator").innerText = "PASO 1: SELECCIONA UN CAMPO EN EL DENDROGRAMA 3D";
+      document.getElementById("dynamic-content").innerHTML = `<p style="color: var(--text-muted);">Haz clic en cualquiera de los 25 nodos flotantes en el espacio 3D para definir el punto de partida de tu anteproyecto.</p>`;
     }
 
-    // Renderizado al cargar
+    window.addEventListener("resize", resizeCanvas);
     window.onload = () => {
-      setTimeout(renderCircularDendrogram, 100);
+      init3DNodes();
     };
-    window.onresize = renderCircularDendrogram;
   </script>
 </body>
 </html>
